@@ -2,6 +2,7 @@ const express = require("express");
 const ejs = require("ejs");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
+const encrypt = require("mongoose-encryption");
 
 // setup app using express 
 const app = express();
@@ -15,7 +16,7 @@ app.use(express.static("public"));
 
 mongoose.connect("mongodb://localhost:27017/userDB");
 
-const userSchema = {
+const userSchema = new mongoose.Schema({
     email: {
         type : String,
         required: [true, "email is required"]
@@ -24,8 +25,13 @@ const userSchema = {
         type: String,
         required: [true, "password is also required"]
     }
-}
+});
 
+// now we can apply encryptyon
+// make a uncagsable string as password
+
+const secret = "youcanguessthisismykey";
+userSchema.plugin(encrypt, { secret: secret , encryptedFields: ["password"]})
 const User = new mongoose.model("User", userSchema);
 
 
@@ -69,6 +75,7 @@ app.post("/login", (req, res)=>{
             console.log(err);
         }else{
             if(foundUser!= null){
+                console.log(foundUser.password);
                 if(foundUser.password === password){
                     res.render("secrets");
                 }else{
